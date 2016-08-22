@@ -14,6 +14,12 @@ class SurveyMonkey
     private $url;
     private $cache = array();
 
+    /**
+     * SurveyMonkey constructor.
+     *
+     * @param $apiKey
+     * @param $accessToken
+     */
     public function __construct($apiKey, $accessToken)
     {
         $this->apiKey = $apiKey;
@@ -39,23 +45,54 @@ class SurveyMonkey
         );
     }
 
-    private function call($endpoint)
+    /**
+     * Handles the call to Survey Monkey
+     *
+     * @param $endPoint
+     * @param bool $cache
+     * @param bool $page
+     * @param bool $perPage
+     * @return array
+     */
+    private function call($endPoint, $cache = true, $page = false, $perPage = false)
     {
-        $url = $this->url . $endpoint . '?api_key=' . $this->apiKey;
-        $ch  = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getRequestHeaders());
-        $result = curl_exec($ch);
-        curl_close($ch);
-        return $this->parseJson($result);
+        $cacheKey = $endPoint . $page . $perPage;
+
+        $pagination = '';
+        if($page !== false && $perPage !== false) {
+            $pagination = '&page=' . $page . '&per_page=' . $perPage;
+        }
+
+        if($cache && !empty($this->cache[$cacheKey])) {
+            return $this->cache[$endPoint];
+        }
+
+        try {
+            $url = $this->url . $endPoint . '?api_key=' . $this->apiKey . $pagination;
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getRequestHeaders());
+            $result = curl_exec($ch);
+            curl_close($ch);
+            $result = $this->parseJson($result);
+        }catch (Exception $e){
+            echo $e->getMessage();
+            exit;
+        }
+
+        if($cache) {
+            $this->cache[$cacheKey] = $result;
+        }
+
+        return $result;
     }
 
     /**
      * Parses json to a PHP array
      *
      * @param $json
-     * @return mixed
+     * @return array
      */
     private function parseJson($json)
     {
@@ -63,7 +100,7 @@ class SurveyMonkey
     }
 
     /**
-     * Calls users/me. By default caches the call
+     * Calls /v3/users/me. By default caches the call
      *
      * @param bool $cache
      * @return array
@@ -72,16 +109,22 @@ class SurveyMonkey
     {
         $endPoint = 'users/me';
 
-        if($cache && !empty($this->cache[$endPoint])) {
-            return $this->cache[$endPoint];
-        }
+        return $this->call($endPoint, $cache);
+    }
 
-        $result = $this->call($endPoint);
 
-        if($cache) {
-            $this->cache[$endPoint] = $result;
-        }
+    /**
+     * Calls /v3/surveys. A list of all your surveys. By default caches the call.
+     *
+     * @param int $page
+     * @param int $perPage
+     * @param bool $cache
+     * @return array
+     */
+    public function getAllSurveys($page = 1, $perPage = 50, $cache = true)
+    {
+        $endPoint = 'surveys';
 
-        return $result;
+        return $this->call($endPoint, $cache, $page, $perPage);
     }
 }
