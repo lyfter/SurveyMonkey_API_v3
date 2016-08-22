@@ -54,7 +54,7 @@ class SurveyMonkey
      * @param bool $perPage
      * @return array
      */
-    private function call($endPoint, $cache = true, $page = false, $perPage = false)
+    public function call($endPoint, $cache = true, $page = false, $perPage = false)
     {
         $cacheKey = $endPoint . $page . $perPage;
 
@@ -69,11 +69,13 @@ class SurveyMonkey
 
         try {
             $url = $this->url . $endPoint . '?api_key=' . $this->apiKey . $pagination;
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getRequestHeaders());
             $result = curl_exec($ch);
+
             curl_close($ch);
             $result = $this->parseJson($result);
         }catch (Exception $e){
@@ -126,5 +128,54 @@ class SurveyMonkey
         $endPoint = 'surveys';
 
         return $this->call($endPoint, $cache, $page, $perPage);
+    }
+
+    /**
+     * Calls /v3/surveys/[id]/collectors. A list of all the collectors related to the given survey.
+     *
+     * @param int $surveyId
+     * @param int $page
+     * @param int $perPage
+     * @param bool $cache
+     * @return array
+     */
+    public function getCollectors($surveyId, $page = 1, $perPage = 50, $cache = true)
+    {
+        $endPoint = 'surveys/' . (string) $surveyId . '/collectors';
+
+        return $this->call($endPoint, $cache, $page, $perPage);
+    }
+
+
+    /**
+     * Calls /v3/collectors/[id]/response/bulk. A list of all responses to a survey linked to one collector.
+     *
+     * @param int $collectorId
+     * @param int $page
+     * @param int $perPage
+     * @param bool $cache
+     * @return array
+     */
+    public function getSurveyResponses($collectorId, $page = 1, $perPage = 50, $cache = true)
+    {
+        $endPoint = 'collectors/' . (string) $collectorId . '/responses/bulk';
+
+        return $this->call($endPoint, $cache, $page, $perPage);
+    }
+
+
+    /**
+     * Calls /v3/collectors/[id]/responses/[id]/details. All details of a response.
+     *
+     * @param int $collectorId
+     * @param int $responseId
+     * @param bool $cache
+     * @return array
+     */
+    public function getResponseDetails($collectorId, $responseId, $cache = true)
+    {
+        $endPoint = 'collectors/' . (string) $collectorId . '/responses/' . (string) $responseId . '/details';
+
+        return $this->call($endPoint, $cache);
     }
 }

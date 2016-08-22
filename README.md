@@ -1,4 +1,3 @@
-# SurveyMonkey_API_v3
 A Survey Monkey API v3 wrapper for PHP
 ==============================
 
@@ -9,3 +8,13 @@ Survey Monkey API Documentation:
 
 Requirements: 
 - App configured at: https://developer.surveymonkey.com/apps/
+
+Implemented calls:
+- /v3/users/me
+- /v3/surveys
+- /v3/surveys/[id]/collectors
+- /v3/collectors/[id]/response/bulk
+- /v3/collectors/[id]/responses/[id]/details
+
+Unimplemented calls can be called with the call function:
+- call($endPoint, $cache = true, $page = false, $perPage = false)
