@@ -63,8 +63,9 @@ class SurveyMonkey
             $pagination = '&page=' . $page . '&per_page=' . $perPage;
         }
 
+
         if($cache && !empty($this->cache[$cacheKey])) {
-            return $this->cache[$endPoint];
+            return $this->cache[$cacheKey];
         }
 
         try {
