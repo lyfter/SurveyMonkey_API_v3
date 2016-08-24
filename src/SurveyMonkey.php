@@ -63,8 +63,9 @@ class SurveyMonkey
             $pagination = '&page=' . $page . '&per_page=' . $perPage;
         }
 
+
         if($cache && !empty($this->cache[$cacheKey])) {
-            return $this->cache[$endPoint];
+            return $this->cache[$cacheKey];
         }
 
         try {
@@ -177,5 +178,110 @@ class SurveyMonkey
         $endPoint = 'collectors/' . (string) $collectorId . '/responses/' . (string) $responseId . '/details';
 
         return $this->call($endPoint, $cache);
+    }
+
+    /**
+     * Calls /v3/surveys/[id]/pages/[id]/questions. A list of all the questions of a page of a survey
+     *
+     * @param $surveyId
+     * @param $pageId
+     * @param bool $cache
+     * @return array
+     */
+    public function getQuestionsOfPage($surveyId, $pageId, $cache = true)
+    {
+        $endPoint = 'surveys/' . (string) $surveyId . '/pages/' . (string) $pageId . '/questions';
+
+        return $this->call($endPoint, $cache);
+    }
+
+
+    /**
+     * Calls /v3/surveys/[id]/details. A object with survey information.
+     *
+     * @param $surveyId
+     * @param bool $cache
+     * @return array
+     */
+    public function getSurveyDetails($surveyId, $cache = true)
+    {
+        $endPoint = 'surveys/' . (string) $surveyId . '/details';
+
+        return $this->call($endPoint, $cache);
+    }
+
+    /** Several function that combine multiple calls **/
+
+
+    /**
+     * Get's all the answers to a collector of a survey. Returns a array with, for each response, for each question, the question & answer.
+     *
+     * This function supports the following field types: Single Textbox, Multiple Textbox, Multiple Choice, Dropdown & Comment Box
+     *
+     * @param $collectorId
+     * @param $surveyId
+     * @return array
+     */
+    public function getParsedAnswers($collectorId, $surveyId)
+    {
+        $responses = array();
+
+        $questions = $this->getParsedQuestions($surveyId);
+
+        // collect al the responses
+        $surveyResponses = $this->getSurveyResponses($collectorId);
+        if(!empty($surveyResponses->data)) {
+            foreach ($surveyResponses->data as $response) {
+                // responses are separated per page
+                foreach($response->pages as $page) {
+                    // each page has questions
+                    foreach($page->questions as $question) {
+
+                        $responses[$response->id][$question->id]['question'] = $questions[$question->id]['text'];
+
+                        // the question can have a text or choice_id
+                        if(!empty($question->answers[0]->text)) {
+                            $responses[$response->id][$question->id]['answer'] = $question->answers[0]->text;
+                        }else if(!empty($question->answers[0]->choice_id)) {
+                            $responses[$response->id][$question->id]['answer'] = $questions[$question->id]['answers'][$question->answers[0]->choice_id];
+                        }
+
+                    }
+                }
+            }
+        }
+
+        return $responses;
+    }
+
+
+    /**
+     * Get's all the questions of a survey. Returns a array with all the questions and, is there are, answer options.
+     *
+     * @param $surveyId
+     * @return array
+     */
+    public function getParsedQuestions($surveyId)
+    {
+        $questions = array();
+
+        // collect all the questions & answer options
+        $surveyDetails = $this->getSurveyDetails($surveyId);
+        foreach($surveyDetails->pages as $page) {
+            foreach($page->questions as $question) {
+                // store the question
+                $questions[$question->id]['text'] = $question->headings[0]->heading;
+
+                $questions[$question->id]['answers'] = array();
+                // store answers in case of multiple choice
+                if(!empty($question->answers->choices)) {
+                    foreach($question->answers->choices as $answer) {
+                        $questions[$question->id]['answers'][$answer->id] = $answer->text;
+                    }
+                }
+            }
+        }
+
+        return $questions;
     }
 }
