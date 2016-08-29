@@ -23,7 +23,7 @@ Unimplemented calls can be called with the call function:
 
 Extra parsing functions:
 - public function getParsedAnswers($collectorId, $surveyId){}
-- - Get's all the answers to a collector of a survey. Returns a array with, for each response, for each question, the question & answer. This function supports the following field types: Single Textbox, Multiple Textbox, Multiple Choice, Dropdown & Comment Box
+Get's all the answers to a collector of a survey. Returns a array with, for each response, for each question, the question & answer. This function supports the following field types: Single Textbox, Multiple Textbox, Multiple Choice, Dropdown & Comment Box
 
 - public function getParsedQuestions($surveyId){}
-- - Get's all the questions of a survey. Returns a array with all the questions and, is there are, answer options.
+Get's all the questions of a survey. Returns a array with all the questions and, is there are, answer options.
