@@ -56,11 +56,12 @@ class SurveyMonkey
      */
     public function call($endPoint, $cache = true, $page = false, $perPage = false)
     {
+
         $cacheKey = $endPoint . $page . $perPage;
 
         $pagination = '';
         if($page !== false && $perPage !== false) {
-            $pagination = '&page=' . $page . '&per_page=' . $perPage;
+            $pagination = '?page=' . $page . '&per_page=' . $perPage;
         }
 
 
@@ -69,7 +70,7 @@ class SurveyMonkey
         }
 
         try {
-            $url = $this->url . $endPoint . '?api_key=' . $this->apiKey . $pagination;
+            $url = $this->url . $endPoint . $pagination; // . '&api_key=' . $this->apiKey;
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
@@ -230,6 +231,7 @@ class SurveyMonkey
 
         // collect al the responses
         $surveyResponses = $this->getSurveyResponses($collectorId);
+
         if(!empty($surveyResponses->data)) {
             foreach ($surveyResponses->data as $response) {
                 // responses are separated per page
@@ -267,16 +269,18 @@ class SurveyMonkey
 
         // collect all the questions & answer options
         $surveyDetails = $this->getSurveyDetails($surveyId);
-        foreach($surveyDetails->pages as $page) {
-            foreach($page->questions as $question) {
-                // store the question
-                $questions[$question->id]['text'] = $question->headings[0]->heading;
+        if (!empty($surveyDetails->pages) && is_array($surveyDetails->pages)) {
+            foreach ($surveyDetails->pages as $page) {
+                foreach ($page->questions as $question) {
+                    // store the question
+                    $questions[$question->id]['text'] = $question->headings[0]->heading;
 
-                $questions[$question->id]['answers'] = array();
-                // store answers in case of multiple choice
-                if(!empty($question->answers->choices)) {
-                    foreach($question->answers->choices as $answer) {
-                        $questions[$question->id]['answers'][$answer->id] = $answer->text;
+                    $questions[$question->id]['answers'] = array();
+                    // store answers in case of multiple choice
+                    if (!empty($question->answers->choices)) {
+                        foreach ($question->answers->choices as $answer) {
+                            $questions[$question->id]['answers'][$answer->id] = $answer->text;
+                        }
                     }
                 }
             }
