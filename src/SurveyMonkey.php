@@ -223,32 +223,36 @@ class SurveyMonkey
      * @param $surveyId
      * @return array
      */
-    public function getParsedAnswers($collectorId, $surveyId)
+    public function getParsedAnswers($collectorId, $surveyId, $page = 1, $perPage = 50)
     {
         $responses = array();
 
         $questions = $this->getParsedQuestions($surveyId);
 
         // collect al the responses
-        $surveyResponses = $this->getSurveyResponses($collectorId);
+        $surveyResponses = $this->getSurveyResponses($collectorId, $page, $perPage);
 
         if(!empty($surveyResponses->data)) {
             foreach ($surveyResponses->data as $response) {
                 // responses are separated per page
                 foreach($response->pages as $page) {
-                    // each page has questions
-                    foreach($page->questions as $question) {
 
-                        $responses[$response->id][$question->id]['question'] = $questions[$question->id]['text'];
+                        // each page has questions
+                        foreach ($page->questions as $question) {
 
-                        // the question can have a text or choice_id
-                        if(!empty($question->answers[0]->text)) {
-                            $responses[$response->id][$question->id]['answer'] = $question->answers[0]->text;
-                        }else if(!empty($question->answers[0]->choice_id)) {
-                            $responses[$response->id][$question->id]['answer'] = $questions[$question->id]['answers'][$question->answers[0]->choice_id];
+                            $responses[$response->id][$question->id]['question'] = $questions[$question->id]['text'];
+
+                            // the question can have a text or choice_id
+                            if (!empty($question->answers[0]->text)) {
+                                $responses[$response->id][$question->id]['answer'] = $question->answers[0]->text;
+                            } else {
+                                if (!empty($question->answers[0]->choice_id)) {
+                                    $responses[$response->id][$question->id]['answer'] = $questions[$question->id]['answers'][$question->answers[0]->choice_id];
+                                }
+                            }
+
                         }
 
-                    }
                 }
             }
         }
@@ -272,14 +276,19 @@ class SurveyMonkey
         if (!empty($surveyDetails->pages) && is_array($surveyDetails->pages)) {
             foreach ($surveyDetails->pages as $page) {
                 foreach ($page->questions as $question) {
-                    // store the question
-                    $questions[$question->id]['text'] = $question->headings[0]->heading;
 
-                    $questions[$question->id]['answers'] = array();
-                    // store answers in case of multiple choice
-                    if (!empty($question->answers->choices)) {
-                        foreach ($question->answers->choices as $answer) {
-                            $questions[$question->id]['answers'][$answer->id] = $answer->text;
+                    if(!isset($question->headings[0]->heading)) {
+                        continue;
+                    } else {
+                        // store the question
+                        $questions[$question->id]['text'] = $question->headings[0]->heading;
+
+                        $questions[$question->id]['answers'] = array();
+                        // store answers in case of multiple choice
+                        if (!empty($question->answers->choices)) {
+                            foreach ($question->answers->choices as $answer) {
+                                $questions[$question->id]['answers'][$answer->id] = $answer->text;
+                            }
                         }
                     }
                 }
