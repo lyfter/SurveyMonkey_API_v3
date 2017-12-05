@@ -242,12 +242,12 @@ class SurveyMonkey
 
                             $responses[$response->id][$question->id]['question'] = $questions[$question->id]['text'];
 
-                            // the question can have a text or choice_id
-                            if (!empty($question->answers[0]->text)) {
-                                $responses[$response->id][$question->id]['answer'] = $question->answers[0]->text;
-                            } else {
-                                if (!empty($question->answers[0]->choice_id)) {
-                                    $responses[$response->id][$question->id]['answer'] = $questions[$question->id]['answers'][$question->answers[0]->choice_id];
+
+                            foreach ($question->answers as $answer) {
+                                if (!empty($answer->text)) {
+                                    $responses[$response->id][$question->id]['answers'][] = $answer->text;
+                                } else if(!empty($answer->choice_id)) {
+                                    $responses[$response->id][$question->id]['answers'][] = $answer->choice_id;
                                 }
                             }
 
