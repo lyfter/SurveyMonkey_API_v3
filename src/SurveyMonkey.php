@@ -242,7 +242,6 @@ class SurveyMonkey
 
                             $responses[$response->id][$question->id]['question'] = $questions[$question->id]['text'];
 
-
                             foreach ($question->answers as $answer) {
                                 if (!empty($answer->text)) {
                                     $responses[$response->id][$question->id]['answers'][] = $answer->text;
@@ -275,11 +274,15 @@ class SurveyMonkey
 
         if (!empty($surveyDetails->pages) && is_array($surveyDetails->pages)) {
             foreach ($surveyDetails->pages as $page) {
-                foreach ($page->questions as $question) {
 
+                foreach ($page->questions as $question) {
                     if(!isset($question->headings[0]->heading)) {
                         continue;
                     } else {
+
+                        $questions[$question->id]['type_family'] = $question->family;
+                        $questions[$question->id]['type_subtype'] = $question->subtype;
+
                         // store the question
                         $questions[$question->id]['text'] = $question->headings[0]->heading;
 
@@ -287,6 +290,13 @@ class SurveyMonkey
                         // store answers in case of multiple choice
                         if (!empty($question->answers->choices)) {
                             foreach ($question->answers->choices as $answer) {
+                                $questions[$question->id]['answers'][$answer->id] = $answer->text;
+                            }
+                        }
+
+                        // store answers in case of multiple choice
+                        if (!empty($question->answers->rows)) {
+                            foreach ($question->answers->rows as $answer) {
                                 $questions[$question->id]['answers'][$answer->id] = $answer->text;
                             }
                         }
