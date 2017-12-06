@@ -238,15 +238,18 @@ class SurveyMonkey
                 foreach($response->pages as $page) {
                     // each page has questions
                     foreach ($page->questions as $question) {
+
                         $responses[$response->id][$question->id]['question'] = $questions[$question->id]['text'];
+
                         foreach ($question->answers as $answer) {
                             if (!empty($answer->text)) {
                                 $responses[$response->id][$question->id]['answers'][] = $answer->text;
-                            } else if(!empty($answer->choice_id)) {
-                                // choices have id's as answers, get the original text
+                            }
+
+                            if(!empty($answer->choice_id)) {
                                 foreach($questions as $q) {
                                     foreach ($q['answers'] as $choice_id => $choice) {
-                                        if ($choice_id === $answer->choice_id) {
+                                        if ((int) $choice_id === (int) $answer->choice_id) {
                                             $responses[$response->id][$question->id]['answers'][] = $q['answers'][$answer->choice_id];
                                         }
                                     }
@@ -257,7 +260,6 @@ class SurveyMonkey
                 }
             }
         }
-
         return $responses;
     }
 
